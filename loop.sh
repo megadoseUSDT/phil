@@ -139,6 +139,9 @@ PY
   echo "model: $MODEL ($MODEL_WHY)" >&2
 
   PROMPT="$(cat CYCLE.md)"
+  # Fork operator (2026-10-16): Claude Code 2.1.x treats a bare 24 KB
+  # CYCLE.md as context and replies "no request"; an explicit go line fixes it.
+  GO_LINE=$'\n\n---\nBegin now: execute the trading cycle procedure above exactly once, starting at step 0.'
   if [ "$REAL_MODE" -eq 1 ]; then
     if [ "$PEARL_UP" -eq 1 ] \
        && python3 core/real.py doctor 2>/dev/null | grep -q '"ready": true'; then
@@ -153,7 +156,7 @@ PY
   # step 9 and its rebase path mandate exactly these commands, and a
   # permission-blocked "checkout -B" strands the cycle's commits on a
   # detached HEAD (2026-08-28).
-  CMD=(claude -p "$PROMPT" --model "$MODEL"
+  CMD=(claude -p "$PROMPT$GO_LINE" --model "$MODEL"
        --allowedTools "Read" "Glob" "Grep" "WebSearch" "WebFetch"
          "Edit" "Write" "Task"
          "Bash(python3 core/*)" "Bash(git add:*)" "Bash(git commit:*)"
